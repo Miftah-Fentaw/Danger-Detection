@@ -234,7 +234,7 @@ git filter-repo --path path/to/large/file --invert-paths --force
 
 ## License
 
-MIT License - See LICENSE file for details.
+MIT License - See [LICENSE](LICENSE) file for details.
 
 ## Acknowledgments
 
