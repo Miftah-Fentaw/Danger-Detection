@@ -1,5 +1,20 @@
 # Danger Detection
 
+```
+╔══════════════════════════════════════════════════════════════════════════════════╗
+║                                                                                  ║
+║     █████╗  ██████╗ ██████╗███████╗     ██████╗ ███████╗ ██████╗ ██████╗       ║
+║    ██╔══██╗██╔════╝██╔════╝██╔════╝    ██╔═══██╗██╔════╝██╔════╝██╔══██╗      ║
+║    ███████║██║     ██║     █████╗      ██║   ██║█████╗  ██║     ██████╔╝      ║
+║    ██╔══██║██║     ██║     ██╔══╝      ██║   ██║██╔══╝  ██║     ██╔══██╗      ║
+║    ██║  ██║╚██████╗╚██████╗███████╗    ╚██████╔╝██║     ╚██████╗██║  ██║      ║
+║    ╚═╝  ╚═╝ ╚═════╝ ╚═════╝╚══════╝     ╚═════╝ ╚═╝      ╚═════╝╚═╝  ╚═╝      ║
+║                                                                                  ║
+║         🔥 Fire & Smoke Detection System with Real-Time Alerts 🔥                ║
+║                                                                                  ║
+╚══════════════════════════════════════════════════════════════════════════════════╝
+```
+
 A real-time fire and smoke detection system with desktop monitoring and web-based alerts. Uses YOLO computer vision models for detection, with a Tkinter desktop UI and Progressive Web App (PWA) for remote monitoring.
 
 ![Python](https://img.shields.io/badge/python-3.10+-blue)
