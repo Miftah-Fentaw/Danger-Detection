@@ -1,1 +1,2 @@
 danger_detection/models/yolvo8n.pt filter=lfs diff=lfs merge=lfs -text
+app/models/fire_smoke.pt filter=lfs diff=lfs merge=lfs -text
