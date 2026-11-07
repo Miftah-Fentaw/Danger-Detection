@@ -8,6 +8,7 @@ danger_detection/data/*.db
 danger_detection/data/*.db-journal
 danger_detection/data/*.db-wal
 danger_detection/data/*.db-shm
+danger_detection/data/snapshots/
 __pycache__/
 danger_detection/models/fire_smoke.pt
 danger_detection/models/fire_smoke.pt
