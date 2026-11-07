@@ -115,7 +115,57 @@ pip install --upgrade pip
 pip install -r danger_detection/requirements.txt
 ```
 
-4. Build the web UI (optional but recommended):
+4. Download the fire/smoke model. The application does not use an LLM; it uses
+   an Ultralytics YOLO object-detection checkpoint. Download the `yolov8n.pt`
+   weights from the
+   [SHOU-ISD/fire-and-smoke model page](https://huggingface.co/SHOU-ISD/fire-and-smoke)
+   and save them as:
+
+```text
+danger_detection/models/fire_smoke.pt
+```
+
+Create the directory if needed:
+
+```bash
+mkdir -p danger_detection/models
+```
+
+You can download the file from the model page's **Files and versions** tab,
+or use the Hugging Face Python client:
+
+```bash
+pip install huggingface_hub
+python - <<'PY'
+from pathlib import Path
+from huggingface_hub import hf_hub_download
+
+source = hf_hub_download(
+    repo_id="SHOU-ISD/fire-and-smoke",
+    filename="yolov8n.pt",
+)
+target = Path("danger_detection/models/fire_smoke.pt")
+target.write_bytes(Path(source).read_bytes())
+print(f"Saved {target}")
+PY
+```
+
+Verify that the checkpoint is valid and contains the expected classes:
+
+```bash
+python - <<'PY'
+from ultralytics import YOLO
+
+model = YOLO("danger_detection/models/fire_smoke.pt")
+print(model.names)
+PY
+```
+
+The output should contain `Fire` and `Smoke` (class IDs 0 and 1). Do not use
+an arbitrary standard `yolov8n.pt` for fire detection: the COCO model does not
+contain fire or smoke classes.
+
+5. Build the web UI (optional when using the Vite development server):
 ```bash
 cd web
 npm install
@@ -125,26 +175,54 @@ cd ..
 
 ## Running the Application
 
-The system requires two components running simultaneously:
+The system requires three processes when developing with the React/Vite server:
 
-### Terminal 1 - API Server + Web PWA
-
-```bash
-source venv/bin/activate
-export PYTHONPATH="${PWD}"
-uvicorn danger_detection.app.pwa_server:app --host 127.0.0.1 --port 8000
-```
-
-### Terminal 2 - Desktop App
+### Terminal 1 - React development server
 
 ```bash
-source venv/bin/activate
-PYTHONPATH=. python -m danger_detection.app.main
+cd web
+npm run dev
 ```
 
-### Access the PWA
+### Terminal 2 - API server
 
-Open **http://localhost:8000** in your browser.
+```bash
+./run-pwa-server.sh
+```
+
+### Terminal 3 - Camera and detection
+
+```bash
+./run-desktop.sh
+```
+
+Open the development PWA at **http://localhost:5173**. The React app connects
+to the FastAPI service on port 8000.
+
+For a production-style local run, build `web/` first and start only the API
+server and desktop app:
+
+```bash
+./run-pwa-server.sh
+./run-desktop.sh
+```
+
+Then open **http://localhost:8000**.
+
+Check that the API is available before opening the PWA:
+
+```bash
+curl http://127.0.0.1:8000/health
+```
+
+Expected response:
+
+```json
+{"status":"ok"}
+```
+
+If the browser shows “Unable to reach the alert service”, the API server is
+not running on port 8000. Start `./run-pwa-server.sh` and refresh the page.
 
 ## Environment Variables
 
@@ -169,14 +247,25 @@ python -m danger_detection.app.main
 
 ## Models
 
-The system uses YOLO models:
+The system uses YOLO computer-vision models, not a language model:
 
-- **Fire/Smoke Detection**: Custom fine-tuned model (place at `danger_detection/models/`)
-- **Person Detection**: COCO YOLOv8 model (auto-downloaded)
+- **Fire/smoke detection**: `danger_detection/models/fire_smoke.pt`, a
+  fire-and-smoke checkpoint from
+  [SHOU-ISD/fire-and-smoke](https://huggingface.co/SHOU-ISD/fire-and-smoke).
+- **Person detection**: optional COCO YOLOv8 weights at
+  `danger_detection/models/yolov8n.pt`. If they are not present, fire/smoke
+  detection still works, but person tracking is unavailable.
 
-Place your custom fire/smoke model at:
-```
-danger_detection/models/fire_smoke.pt
+The fire/smoke checkpoint must expose classes named `Fire` and `Smoke` (the
+detector matches names case-insensitively). Model files are intentionally
+ignored by Git because they are large; every fresh clone must download the
+weights separately.
+
+To use a model stored somewhere else:
+
+```bash
+export DANGER_DETECTION_MODEL=/absolute/path/to/model.pt
+./run-desktop.sh
 ```
 
 ## API Endpoints

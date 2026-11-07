@@ -1,73 +1,90 @@
-# React + TypeScript + Vite
+# Danger Detection Web PWA
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This directory contains the React + Vite citizen-facing alert dashboard. It
+does not run YOLO inference and it does not access the camera. The Python
+FastAPI service provides the REST API and WebSocket connection used by this
+frontend.
 
-Currently, two official plugins are available:
+## Requirements
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- Node.js 18 or newer
+- npm
+- The Python API running on port 8000 for live data
 
-## React Compiler
+Install dependencies:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Development
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Start the Vite development server:
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run dev
 ```
+
+Open `http://localhost:5173`. In development, the frontend uses:
+
+- REST: `http://localhost:8000/api/events`
+- WebSocket: `ws://localhost:8000/ws`
+
+Start the API separately from the repository root:
+
+```bash
+./run-pwa-server.sh
+```
+
+The desktop detector is a third process when live camera alerts are required:
+
+```bash
+./run-desktop.sh
+```
+
+## Production build
+
+Build the static files:
+
+```bash
+npm run build
+```
+
+The output is written to `dist/`. The FastAPI server serves `web/dist/` at
+`http://localhost:8000` when the directory exists.
+
+Other useful commands:
+
+```bash
+npm run lint
+npm run preview
+```
+
+## Configuration
+
+Copy `.env.example` to `.env.local` when the development API is not at the
+default address:
+
+```bash
+cp .env.example .env.local
+```
+
+Available Vite variables:
+
+| Variable | Purpose |
+|---|---|
+| `VITE_API_BASE` | REST API base, such as `http://127.0.0.1:8000` |
+| `VITE_WS_URL` | WebSocket URL, such as `ws://127.0.0.1:8000/ws` |
+
+The production build uses the same origin for API and WebSocket requests.
+
+## Dashboard behavior
+
+- **Alerts:** loads recent events and subscribes to live WebSocket alerts.
+- **Settings:** stores sound and vibration preferences in browser
+  `localStorage`.
+- **Clear list:** sends `POST /api/events/clear`.
+
+If the page displays “Unable to reach the alert service”, verify that the
+FastAPI process is running and that `curl http://127.0.0.1:8000/health` returns
+`{"status":"ok"}`.
