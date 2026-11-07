@@ -55,7 +55,7 @@ from danger_detection.app.ui import (
     Stepper,
     Toggle,
 )
-from danger_detection.app.utils import bgr_to_rgb, package_root, resize_to_fit
+from danger_detection.app.utils import bgr_to_rgb, package_root
 
 DEFAULT_ALERT_URL = "http://127.0.0.1:8000/internal/alert"
 
@@ -122,6 +122,7 @@ class DangerDetectionApp:
         self._poll_job: Optional[str] = None
         self._events: "queue.Queue[tuple]" = queue.Queue()  # worker thread → UI
         self.server_state = "unknown"  # online / offline / disabled / unknown
+        self.fill_video = True  # cover the whole stage (crop edges) vs. letterbox fit
 
         self.detector = FireSmokeDetector(on_alert=self._on_detector_alert)
 
@@ -204,14 +205,16 @@ class DangerDetectionApp:
         self.cam_title.pack(side=tk.LEFT, padx=(6, 10))
         self.cam_state = tk.Label(strip, text="Offline", bg=SUNKEN, fg=MUTED, font=f(9, "bold"), padx=8, pady=2)
         self.cam_state.pack(side=tk.LEFT)
+        self.fit_btn = FlatButton(strip, "Fill", self._toggle_fit, f, "ghost", icon="⤢", size=8, pad=(10, 3))
+        self.fit_btn.pack(side=tk.RIGHT, padx=(10, 0))
         self.cam_meta = tk.Label(strip, text="", bg=SURFACE, fg=MUTED, font=f(9, family="mono"))
         self.cam_meta.pack(side=tk.RIGHT)
 
         # video stage
         self.stage = tk.Frame(card, bg="#000000")
         self.stage.grid(row=1, column=0, sticky="nsew", padx=1)
-        self.video = tk.Label(self.stage, bg="#000000", bd=0)
-        self.video.place(relx=0.5, rely=0.5, anchor="center")
+        self.video = tk.Label(self.stage, bg="#000000", bd=0, highlightthickness=0)
+        self.video.place(x=0, y=0, relwidth=1, relheight=1)
 
         self.placeholder = tk.Frame(self.stage, bg="#000000")
         self.placeholder.place(relx=0.5, rely=0.5, anchor="center")
@@ -497,6 +500,25 @@ class DangerDetectionApp:
         push_alert_to_pwa(1, 0)
         self._log("warn", "Test alert sent to the web app (fire ×1).")
 
+    def _frame_image(self, frame_bgr, sw: int, sh: int) -> Image.Image:
+        """Scale the frame to the stage: fill (cover + centre crop) or fit (letterbox)."""
+        img = Image.fromarray(bgr_to_rgb(frame_bgr))
+        w, h = img.size
+        scale = max(sw / w, sh / h) if self.fill_video else min(sw / w, sh / h)
+        nw, nh = max(1, round(w * scale)), max(1, round(h * scale))
+        img = img.resize((nw, nh), Image.BILINEAR)
+        if self.fill_video:
+            left, top = (nw - sw) // 2, (nh - sh) // 2
+            img = img.crop((left, top, left + sw, top + sh))
+        return img
+
+    def _toggle_fit(self) -> None:
+        self.fill_video = not self.fill_video
+        self.fit_btn.set(text="⤢  Fill" if self.fill_video else "⤡  Fit")
+        self._log("info", "Video fills the panel (edges cropped)." if self.fill_video else "Video fits the panel (whole frame).")
+        if self._last_packet is not None:
+            self._show_frame(self._last_packet, count=False)
+
     def _set_camera(self, idx: int) -> None:
         self.detector.camera_index = idx
         self.cam_title.configure(text=f"CAMERA {idx}")
@@ -546,18 +568,18 @@ class DangerDetectionApp:
             self._poll_job = None
             self._on_stop("Monitoring ended.")
 
-    def _show_frame(self, packet: FramePacket) -> None:
+    def _show_frame(self, packet: FramePacket, count: bool = True) -> None:
         self._last_packet = packet
         now = time.monotonic()
-        self.frames += 1
-        self._fps_window.append(now)
+        if count:
+            self.frames += 1
+            self._fps_window.append(now)
         self._fps_window = [t for t in self._fps_window if now - t <= 2.0]
         self.fps = len(self._fps_window) / 2.0
 
         sw = max(160, self.stage.winfo_width())
         sh = max(120, self.stage.winfo_height())
-        resized, _ = resize_to_fit(packet.frame_bgr, sw, sh)
-        self._photo = ImageTk.PhotoImage(image=Image.fromarray(bgr_to_rgb(resized)))
+        self._photo = ImageTk.PhotoImage(image=self._frame_image(packet.frame_bgr, sw, sh))
         self.video.configure(image=self._photo)
         self.video.lift()
         self.placeholder.place_forget()
