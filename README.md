@@ -1,5 +1,7 @@
 # Danger Detection
 
+![FireGuard banner](docs/assets/fireguard-banner.png)
+
 ```
 ╔══════════════════════════════════════════════════════════════════════════════════╗
 ║                                                                                  ║
