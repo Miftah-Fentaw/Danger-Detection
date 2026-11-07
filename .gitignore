@@ -13,3 +13,6 @@ danger_detection/models/fire_smoke.pt
 danger_detection/models/fire_smoke.pt
 __pycache__/
 venv/
+
+# Vercel
+.vercel/

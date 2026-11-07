@@ -1,0 +1,9 @@
+# Only the landing page is deployed; keep the upload small when using the Vercel CLI.
+venv/
+**/__pycache__/
+*.pt
+danger_detection/data/
+landing-page/node_modules/
+landing-page/dist/
+web/node_modules/
+web/dist/

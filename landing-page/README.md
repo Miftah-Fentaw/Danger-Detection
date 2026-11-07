@@ -1,32 +1,48 @@
-# React + TypeScript + Vite
+# Danger Detection: website
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+The official site and documentation for [Danger Detection](https://github.com/Miftah-Fentaw/Danger-Detection), built with React, TypeScript and Vite.
 
-Currently, two official plugins are available:
+## Develop
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+cd landing-page
+npm install
+npm run dev       # http://localhost:5173
+npm run build     # production build in dist/
+npm run preview   # serve the build locally
+npm run lint
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Requires Node.js 22.12 or newer.
+
+Pages use hash routes (`#/docs/...`), so the build is a static `dist/` folder that works on any host without rewrite rules.
+
+## Deploy to Vercel
+
+The repository root contains `vercel.json`, which builds only this folder:
+
+| Setting          | Value                              |
+| ---------------- | ---------------------------------- |
+| Install command  | `cd landing-page && npm ci`        |
+| Build command    | `cd landing-page && npm run build` |
+| Output directory | `landing-page/dist`                |
+
+### From the dashboard
+
+1. Go to [vercel.com/new](https://vercel.com/new) and import the GitHub repository.
+2. Leave **Root Directory** as the repository root (`./`); `vercel.json` provides the commands.
+3. Click **Deploy**. Every push to `main` deploys to production, and other branches get preview URLs.
+
+### From the CLI
+
+```bash
+npm i -g vercel
+vercel           # run from the repository root; creates a preview deployment
+vercel --prod    # production deployment
+```
+
+`.vercelignore` keeps model weights, virtual environments and build folders out of CLI uploads.
+
+### Custom domain
+
+In the Vercel project, open **Settings → Domains**, add your domain, and create the DNS record Vercel shows (an `A` record for an apex domain or a `CNAME` for a subdomain).
