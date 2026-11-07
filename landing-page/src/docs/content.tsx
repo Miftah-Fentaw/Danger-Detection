@@ -90,7 +90,27 @@ source venv/bin/activate      # Linux / macOS
             />
             <h3>3. Install Python dependencies</h3>
             <CodeBlock code={`pip install --upgrade pip\npip install -r danger_detection/requirements.txt`} />
-            <h3>4. Build the web app</h3>
+            <h3>4. Download the model</h3>
+            <p>
+              Save the fire and smoke checkpoint (<code>yolov8n.pt</code> from the{' '}
+              <a href="https://huggingface.co/SHOU-ISD/fire-and-smoke" target="_blank" rel="noreferrer">
+                SHOU-ISD/fire-and-smoke
+              </a>{' '}
+              model page) as <code>danger_detection/models/fire_smoke.pt</code>:
+            </p>
+            <CodeBlock
+              code={`pip install huggingface_hub
+python - <<'PY'
+from pathlib import Path
+from huggingface_hub import hf_hub_download
+
+source = hf_hub_download(repo_id="SHOU-ISD/fire-and-smoke", filename="yolov8n.pt")
+target = Path("danger_detection/models/fire_smoke.pt")
+target.parent.mkdir(parents=True, exist_ok=True)
+target.write_bytes(Path(source).read_bytes())
+PY`}
+            />
+            <h3>5. Build the web app</h3>
             <p>
               Optional but recommended. The API server serves the built PWA from{' '}
               <code>web/dist</code> at <code>http://localhost:8000</code>.
@@ -413,8 +433,8 @@ export DANGER_DETECTION_LOG_OBJECTS_EVERY_N_FRAMES=10
             </Callout>
             <p>
               Person and object detection always use COCO YOLOv8n at{' '}
-              <code>danger_detection/models/yolov8n.pt</code>, which Ultralytics downloads
-              automatically when missing.
+              <code>danger_detection/models/yolov8n.pt</code>. They are optional: without that file, fire and
+              smoke detection still work but person tracking and object labels are off.
             </p>
           </>
         ),
